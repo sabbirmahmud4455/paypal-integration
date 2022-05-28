@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Transaction;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Srmklive\PayPal\Services\PayPal as PayPalClient;
 
 class PayPalController extends Controller
@@ -24,7 +27,8 @@ class PayPalController extends Controller
      */
     public function processTransaction(Request $request)
     {
-        $provider = new PayPalClient;
+        try{
+            $provider = new PayPalClient;
         $provider->setApiCredentials(config('paypal'));
         $paypalToken = $provider->getAccessToken();
 
@@ -38,13 +42,37 @@ class PayPalController extends Controller
                 0 => [
                     "amount" => [
                         "currency_code" => "USD",
-                        "value" => "1000.00"
+                        "value" => $request->amount
                     ]
                 ]
             ]
         ]);
 
+        // When Transaction is success
         if (isset($response['id']) && $response['id'] != null) {
+
+            // Store Data into Our DB
+            $validator = Validator::make($request->all(), [
+                'name' => 'required',
+                'email' => 'required',
+                'amount' => 'required'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            } else {
+
+                $transaction = new Transaction();
+                $transaction->name = $request->name;
+                $transaction->email = $request->email;
+                $transaction->amount = $request->amount;
+
+                if($transaction->save()){
+                    return response()->json(['success' => 'Transaction Success'], 200);
+                } else {
+                    return response()->json(['warning' => 'Something Wrong. Try Again'], 200);
+                }
+            }
 
             // redirect to approve href
             foreach ($response['links'] as $links) {
@@ -62,6 +90,10 @@ class PayPalController extends Controller
                 ->route('createTransaction')
                 ->with('error', $response['message'] ?? 'Something went wrong.');
         }
+        } catch (Exception $e){
+            return response()->json(['error' => $e->getMessage()], 200);
+        }
+
     }
 
     /**
