@@ -7,25 +7,44 @@
     <script src="https://www.paypal.com/sdk/js?client-id={{ env('PAYPAL_SANDBOX_CLIENT_ID') }}"></script>
 </head>
 <body>
-    <a class="btn btn-primary m-3" href="{{ route('processTransaction') }}">Pay $1000</a>
     <div class="container">
         <div class="row">
-            <div class="col-md-4">
-                <form class="ajax-form" action="{{ route('processTransaction') }}" method="post">
-                    @csrf
-                    <label> Name </label>
-                    <input type="text" name="name" class="form-control">
 
-                    <label> Email </label>
-                    <input type="email" name="email" class="form-control">
 
-                    <label> Pay (in USD) </label>
-                    <input type="number" name="amount" class="form-control">
 
-                    <button class="btn btn-info mt-3">
-                        Pay
-                    </button>
-                </form>
+            <div class="col-md-4 mt-3">
+                <div class="card text-left">
+                    <div class="card-body">
+                      <h4 class="card-title">Paypal Payment Gateway</h4>
+                      <form action="{{ route('processTransaction') }}" method="post">
+                          @csrf
+                          <label> Name </label>
+                          <input required type="text" name="name" class="form-control">
+                          @error('name')
+                              <div class=" text-danger">{{ $message }}</div>
+                          @enderror
+
+
+                          <label> Email </label>
+                          <input required type="email" name="email" class="form-control">
+                          @error('email')
+                              <div class=" text-danger">{{ $message }}</div>
+                          @enderror
+
+                          <label> Pay (in USD) </label>
+                          <input required type="number" name="amount" class="form-control">
+
+                          @error('amount')
+                              <div class=" text-danger">{{ $message }}</div>
+                          @enderror
+
+                          <button class="btn btn-info mt-3">
+                              Pay
+                          </button>
+                      </form>
+
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -39,7 +58,5 @@
         {{ \Session::forget('success') }}
     @endif
 
-    {{--  Ajax Form Submit  --}}
-    <script src="{{ asset('js/ajax-form-submit.js') }}"></script>
 </body>
 </html>
